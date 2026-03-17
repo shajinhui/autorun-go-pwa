@@ -507,6 +507,82 @@ button:active {
   }
 }
 
+@media (max-width: 520px) {
+  .app {
+    padding: 14px 14px 24px;
+    gap: 12px;
+  }
+
+  .header {
+    padding: 16px 18px;
+  }
+
+  .title-block h1 {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .cards,
+  .actions-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+
+  .card-value {
+    font-size: 20px;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+  }
+
+  .actions {
+    margin-top: 10px;
+    gap: 10px;
+  }
+
+  .credentials {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .credentials-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .action-card {
+    padding: 14px;
+  }
+
+  .action-cta {
+    padding: 8px 12px;
+    border-radius: 14px;
+  }
+
+  .footer {
+    position: static;
+    transform: none;
+    width: 100%;
+    padding: 8px;
+    border-radius: 20px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
