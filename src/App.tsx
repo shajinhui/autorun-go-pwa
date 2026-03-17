@@ -152,6 +152,18 @@ export default function App() {
       if (rawText) {
         try {
           data = JSON.parse(rawText)
+          if (typeof data === 'string') {
+            const trimmed = data.trim()
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+              try {
+                data = JSON.parse(trimmed)
+              } catch {
+                data = { msg: data }
+              }
+            } else {
+              data = { msg: data }
+            }
+          }
         } catch {
           data = {}
         }
