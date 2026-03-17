@@ -147,10 +147,23 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      const data = await response.json().catch(() => ({}))
+      const rawText = await response.text().catch(() => '')
+      let data: any = {}
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText)
+        } catch {
+          data = {}
+        }
+      }
 
       if (!response.ok) {
-        const message = typeof data?.msg === 'string' ? data.msg : `请求失败 (${response.status})`
+        const message =
+          typeof data?.msg === 'string'
+            ? data.msg
+            : rawText
+              ? rawText
+              : `请求失败 (${response.status})`
         throw new Error(message)
       }
       if (typeof data?.code === 'number' && data.code !== 10000) {
