@@ -77,6 +77,7 @@ export default function App() {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [adminToken, setAdminToken] = useState('')
   const timerRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -138,6 +139,9 @@ export default function App() {
       }
       if (password.trim()) {
         payload.password = password.trim()
+      }
+      if (adminToken.trim()) {
+        payload.adminToken = adminToken.trim()
       }
 
       const endpoint =
@@ -275,13 +279,13 @@ export default function App() {
           <div className="credentials glass">
             <div className="credentials-header">
               <h3>unirun账号</h3>
-              <span>可选</span>
+              <span>必填</span>
             </div>
             <div className="credentials-grid">
               <label>
                 <span>手机号</span>
                 <input
-                  placeholder="已在云函数配置可留空"
+                  placeholder="普通用户必填"
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                 />
@@ -290,13 +294,22 @@ export default function App() {
                 <span>密码</span>
                 <input
                   type="password"
-                  placeholder="仅在本地使用"
+                  placeholder="普通用户必填"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />
               </label>
+              <label>
+                <span>管理员口令（仅你本人）</span>
+                <input
+                  type="password"
+                  placeholder="设置 ADMIN_TOKEN 后可免填账号"
+                  value={adminToken}
+                  onChange={(event) => setAdminToken(event.target.value)}
+                />
+              </label>
             </div>
-            <p className="credentials-tip">如果后端已配置环境变量，可留空直接操作。</p>
+            <p className="credentials-tip">普通用户必须输入账号密码；管理员口令通过后端 ADMIN_TOKEN 验证。</p>
           </div>
           <div className="actions-grid">
             {ACTIONS.map((action) => {
