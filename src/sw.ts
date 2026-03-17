@@ -71,6 +71,9 @@ registerRoute(
 
 // Offline fallback
 setCatchHandler(async ({ event }) => {
+  if (!('request' in event)) {
+    return Response.error()
+  }
   const request = (event as FetchEvent).request
   if (request.destination === 'document') {
     const fallback = await matchPrecache('/offline.html')

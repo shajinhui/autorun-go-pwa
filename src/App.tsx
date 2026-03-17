@@ -140,7 +140,9 @@ export default function App() {
         payload.password = password.trim()
       }
 
-      const response = await fetch(API_BASE, {
+      const endpoint =
+        API_BASE === '/api' || API_BASE.endsWith('/api') ? `${API_BASE}/${action.id}` : API_BASE
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -155,12 +157,9 @@ export default function App() {
         throw new Error(data?.msg ?? '操作失败')
       }
       const activityName = data?.response?.activityName as string | undefined
+      const backendMsg = typeof data?.msg === 'string' && data.msg.trim() ? data.msg.trim() : '操作成功'
       const successMessage =
-        action.id === 'club'
-          ? activityName
-            ? `签到/签退成功：${activityName}`
-            : '签到/签退成功'
-          : '操作成功'
+        action.id === 'club' && activityName ? `${backendMsg}：${activityName}` : backendMsg
       setActionState((prev) => ({
         ...prev,
         [action.id]: { status: 'success', message: successMessage }
@@ -272,7 +271,7 @@ export default function App() {
                 />
               </label>
             </div>
-            <p className="credentials-tip">如果云函数已配置环境变量，可留空直接操作。</p>
+            <p className="credentials-tip">如果后端已配置环境变量，可留空直接操作。</p>
           </div>
           <div className="actions-grid">
             {ACTIONS.map((action) => {
