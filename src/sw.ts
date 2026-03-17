@@ -71,11 +71,12 @@ registerRoute(
 
 // Offline fallback
 setCatchHandler(async ({ event }) => {
-  if (event.request.destination === 'document') {
+  const request = (event as FetchEvent).request
+  if (request.destination === 'document') {
     const fallback = await matchPrecache('/offline.html')
     return fallback || Response.error()
   }
-  if (event.request.destination === 'image') {
+  if (request.destination === 'image') {
     const fallback = await matchPrecache('/offline-image.svg')
     return fallback || Response.error()
   }
