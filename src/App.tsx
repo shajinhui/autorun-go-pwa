@@ -5,6 +5,11 @@ type Status = 'loading' | 'empty' | 'ready'
 type ActionStatus = 'idle' | 'loading' | 'success' | 'error'
 type PageTab = 'run' | 'club' | 'mine'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
 interface ProgressCard {
   id: string
   title: string
@@ -184,6 +189,8 @@ export default function App() {
   const [clubActionLoading, setClubActionLoading] = useState<Record<string, boolean>>({})
   const [clubQueryDate, setClubQueryDate] = useState(getTodayLocalDate())
   const [manualLoadingCount, setManualLoadingCount] = useState(0)
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null)
+  const [canInstall, setCanInstall] = useState(false)
 
   useEffect(() => {
     const update = registerSW({
@@ -196,6 +203,30 @@ export default function App() {
       }
     })
     setUpdateSW(() => update)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    const onBeforeInstallPrompt = (event: Event) => {
+      const installEvent = event as BeforeInstallPromptEvent
+      installEvent.preventDefault()
+      setInstallPromptEvent(installEvent)
+      setCanInstall(true)
+    }
+    const onAppInstalled = () => {
+      setInstallPromptEvent(null)
+      setCanInstall(false)
+      pushToast('安装成功，可在桌面打开应用', 'success')
+    }
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onAppInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onAppInstalled)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const requestJSON = async (
@@ -435,6 +466,32 @@ export default function App() {
     window.setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id))
     }, 3200)
+  }
+
+  const handleInstallApp = async () => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : ''
+    const isIOS = /iphone|ipad|ipod/.test(ua)
+    const isStandalone =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        ((window.navigator as Navigator & { standalone?: boolean }).standalone === true))
+
+    if (isIOS && !isStandalone) {
+      pushToast('iPhone请点“分享”后选择“添加到主屏幕”', 'success')
+      return
+    }
+
+    if (!installPromptEvent) {
+      pushToast('当前环境暂不支持安装，请稍后再试', 'error')
+      return
+    }
+
+    await installPromptEvent.prompt()
+    const choice = await installPromptEvent.userChoice
+    if (choice.outcome === 'accepted') {
+      setCanInstall(false)
+      setInstallPromptEvent(null)
+    }
   }
 
   const runAction = async (action: ActionItem) => {
@@ -801,6 +858,9 @@ export default function App() {
               <h2>我的</h2>
               <p>账号信息仅用于当前会话请求，不会在前端持久化。</p>
             </div>
+            <button className="primary install-btn" onClick={() => void handleInstallApp()}>
+              安装应用
+            </button>
             {renderCredentials()}
             
           </section>
@@ -850,6 +910,12 @@ export default function App() {
             刷新
           </button>
         </div>
+      )}
+
+      {canInstall && activeTab !== 'mine' && (
+        <button className="install-fab" onClick={() => void handleInstallApp()}>
+          安装应用
+        </button>
       )}
 
       {manualLoadingCount > 0 && (

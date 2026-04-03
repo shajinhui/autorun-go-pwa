@@ -588,6 +588,24 @@ button:active {
   box-shadow: 0 10px 20px rgba(74, 66, 58, 0.1);
 }
 
+.install-btn {
+  width: fit-content;
+}
+
+.install-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 86px;
+  z-index: 20;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4d95df, #6faee5);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(56, 98, 136, 0.3);
+}
+
 .empty {
   padding: 28px;
   border-radius: var(--radius-lg);
