@@ -401,13 +401,11 @@ export default function App() {
         const endTime = typeof item?.endTime === 'string' ? item.endTime : '--:--'
         const joinedCount = firstNumber(item, ['signInStudent', 'applyStudentCount']) ?? 0
         const capacity = firstNumber(item, ['maxStudent']) ?? 0
-        const cancelSign = String(item?.cancelSign ?? '')
         const optionStatus = String(item?.optionStatus ?? '').trim()
         const fullFlag = String(item?.fullActivity ?? '')
-        // optionStatus in current backend payload is numeric code (e.g. "6"/"7"),
-        // so we only treat explicit text flags as joined to avoid false positives.
-        const isJoined = optionStatus.includes('取消报名') || optionStatus.includes('已报名')
-        const isFull = fullFlag === '1' || (capacity > 0 && joinedCount >= capacity)
+        // Club optionStatus codes: 6=可报名, 1=已报名, 3=已报满.
+        const isJoined = optionStatus === '1'
+        const isFull = optionStatus === '3' || fullFlag === '1' || (capacity > 0 && joinedCount >= capacity)
 
         return {
           id: String(item?.clubActivityId ?? item?.activityId ?? index),
