@@ -1306,6 +1306,66 @@ button:active {
       50% 50% / 99% 99% no-repeat;
 }
 
+.auth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.auth-modal {
+  width: min(420px, 100%);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.auth-modal h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.auth-modal p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auth-modal label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.auth-modal input {
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+}
+
+.auth-modal input:focus {
+  border-color: rgba(10, 132, 255, 0.65);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
+}
+
+.auth-modal-error {
+  margin: 0;
+  font-size: 12px;
+  color: #ff453a;
+}
+
+.auth-modal-submit {
+  min-height: 42px;
+}
+
 @keyframes hamster {
   from,
   to {

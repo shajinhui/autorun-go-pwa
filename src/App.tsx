@@ -189,6 +189,11 @@ export default function App() {
   const [clubActionLoading, setClubActionLoading] = useState<Record<string, boolean>>({})
   const [clubQueryDate, setClubQueryDate] = useState(getTodayLocalDate())
   const [manualLoadingCount, setManualLoadingCount] = useState(0)
+  const [authChecking, setAuthChecking] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginError, setLoginError] = useState('')
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null)
   const [canInstall, setCanInstall] = useState(false)
 
@@ -270,6 +275,11 @@ export default function App() {
     if (!response.ok) {
       if (response.status === 401) {
         setSessionKey('')
+        setIsAuthenticated(false)
+        setShowLoginModal(true)
+        setAuthChecking(false)
+        setPassword('')
+        setLoginError('登录态已失效，请重新输入手机号和密码')
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem(SESSION_KEY_STORAGE)
         }
@@ -438,17 +448,54 @@ export default function App() {
     }
   }
 
+  const verifyAuthOnEnter = async () => {
+    setAuthChecking(true)
+    setLoginError('')
+    const savedSession = sessionKey.trim()
+    if (!savedSession) {
+      setIsAuthenticated(false)
+      setShowLoginModal(true)
+      setAuthChecking(false)
+      return
+    }
+
+    try {
+      await requestJSON({ action: 'session_bootstrap', sessionKey: savedSession })
+      setIsAuthenticated(true)
+      setShowLoginModal(false)
+      await loadData()
+    } catch {
+      setIsAuthenticated(false)
+      setShowLoginModal(true)
+      setLoginError('登录态已过期，请重新登录')
+      setPassword('')
+    } finally {
+      setAuthChecking(false)
+    }
+  }
+
   useEffect(() => {
-    void loadData()
+    void verifyAuthOnEnter()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (activeTab === 'club') {
+    if (isAuthenticated && !authChecking && activeTab === 'club') {
       void loadClubData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, clubQueryDate])
+  }, [activeTab, clubQueryDate, isAuthenticated, authChecking])
+
+  const ensureAuthenticated = () => {
+    if (isAuthenticated) {
+      return true
+    }
+    setShowLoginModal(true)
+    if (!loginError) {
+      setLoginError('请先登录后再进行操作')
+    }
+    return false
+  }
 
   const handleRefresh = () => {
     updateSW(true)
@@ -493,6 +540,9 @@ export default function App() {
   }
 
   const runAction = async (action: ActionItem) => {
+    if (!ensureAuthenticated()) {
+      return
+    }
     setActionState((prev) => ({
       ...prev,
       [action.id]: { status: 'loading', message: '处理中…' }
@@ -528,6 +578,9 @@ export default function App() {
   }
 
   const toggleClubJoin = async (activity: ClubActivityItem) => {
+    if (!ensureAuthenticated()) {
+      return
+    }
     if (!activity.activityId) {
       pushToast('活动ID无效', 'error')
       return
@@ -611,6 +664,40 @@ export default function App() {
       <p className="credentials-tip">普通用户必须输入账号密码；管理员口令通过后端 ADMIN_TOKEN 验证。</p>
     </div>
   )
+
+  const handleModalLogin = async () => {
+    const nextPhone = phone.trim()
+    const nextPassword = password.trim()
+    if (!nextPhone || !nextPassword) {
+      setLoginError('手机号和密码不能为空')
+      return
+    }
+
+    setLoginLoading(true)
+    setLoginError('')
+    try {
+      await requestJSON({
+        action: 'login',
+        phone: nextPhone,
+        password: nextPassword
+      })
+      setIsAuthenticated(true)
+      setShowLoginModal(false)
+      setPassword(nextPassword)
+      pushToast('登录成功', 'success')
+      await loadData()
+      if (activeTab === 'club') {
+        await loadClubData()
+      }
+    } catch (err) {
+      setIsAuthenticated(false)
+      setShowLoginModal(true)
+      setLoginError(normalizeErrorMessage(err instanceof Error ? err.message : '', '登录失败'))
+    } finally {
+      setLoginLoading(false)
+      setAuthChecking(false)
+    }
+  }
 
   const pageMeta = PAGE_META[activeTab]
   const clubRate = Math.max(0, Math.min(100, (clubJoined / Math.max(clubTarget, 1)) * 100))
@@ -942,6 +1029,43 @@ export default function App() {
               <div className="spoke" />
             </div>
             <p className="request-loader-text">请求处理中...</p>
+          </div>
+        </div>
+      )}
+
+      {showLoginModal && (
+        <div className="auth-modal-backdrop" role="dialog" aria-modal="true" aria-label="登录验证">
+          <div className="auth-modal glass">
+            <h3>登录已失效</h3>
+            <p>请输入手机号和密码，完成后继续使用。</p>
+            <label>
+              <span>手机号</span>
+              <input
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="请输入手机号"
+                autoComplete="username"
+              />
+            </label>
+            <label>
+              <span>密码</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="请输入密码"
+                autoComplete="current-password"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    void handleModalLogin()
+                  }
+                }}
+              />
+            </label>
+            {loginError && <p className="auth-modal-error">{loginError}</p>}
+            <button className="primary auth-modal-submit" onClick={() => void handleModalLogin()} disabled={loginLoading}>
+              {loginLoading || authChecking ? '验证中...' : '登录'}
+            </button>
           </div>
         </div>
       )}
